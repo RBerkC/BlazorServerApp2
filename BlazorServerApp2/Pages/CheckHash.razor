@@ -1,0 +1,65 @@
+﻿@using BlazorServerApp2.Codes;
+@using BlazorServerApp2.Model;
+
+@inject HashingTest _hashingtest;
+@inject EncryptionTest _encryptiontest;
+@inject TodoContext _todocontext;
+@inject NavigationManager _navi;
+
+<h3>CheckHash</h3>
+
+@page "/CheckHash"
+
+
+@if (IsAuthenticated)
+{
+    <h3>@OutputText</h3>
+}
+else
+{
+    <div> @OutputText</div>
+}
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+
+    public static List<Todolist> todolisten { get; set; }
+    public string username { get; set; }
+
+
+
+    private string? OutputText { get; set; }
+    private bool IsAuthenticated { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        //OutputText = "Du er ikke Logged Ind";
+        string salt = "idjfkdflkjsalj";
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        username = user.Identity.Name;
+
+        IsAuthenticated = user.Identity.IsAuthenticated;
+        //OutputText = _hashingtest.CreateMD5Hash();
+        List<Todolist> NewList = _todocontext.Todolists.Where(p => p.BrugerId == username).ToList();
+
+        HashSet<int> hashSet1 = new HashSet<int>(todolisten.Select(x => x.GetHashCode()));
+        HashSet<int> hashSet2 = new HashSet<int>(NewList.Select(x => x.GetHashCode()));
+
+        bool isEqul = hashSet1.SetEquals(hashSet2);
+        if (isEqul)
+        {
+            OutputText
+    = "Bestået";
+        }
+        else
+        {
+            OutputText
+    = "Ikke bestod";
+        }
+    }
+  
+
+}

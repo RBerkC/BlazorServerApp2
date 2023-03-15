@@ -1,0 +1,44 @@
+﻿@page "/"
+
+@if (IsAuthenticated)
+{
+    <h2> Velkommen til denne side du er logget ind </h2>
+    <a href="/todo"> TODO</a>
+
+}
+else
+{
+    <h2> Du er ikke logget ind</h2>
+}
+
+
+<PageTitle>Index</PageTitle>
+
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+
+    private bool IsAuthenticated { get; set; }
+    //private string? OutputText { get; set; }
+    //private string? OutputText2 { get; set; }
+    //private string? OutputText3 { get; set; }
+    //private string? OutputText4 { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //OutputText = "Du er ikke Logged Ind";
+        string salt = "idjfkdflkjsalj";
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+
+        IsAuthenticated = user.Identity.IsAuthenticated;
+        //OutputText = _hashingtest.CreateMD5Hash();
+
+
+    }
+
+
+}

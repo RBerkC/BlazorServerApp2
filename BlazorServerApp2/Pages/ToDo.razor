@@ -1,0 +1,122 @@
+﻿@using BlazorServerApp2.Codes;
+@using BlazorServerApp2.Model;
+
+@inject HashingTest _hashingtest;
+@inject EncryptionTest _encryptiontest;
+@inject TodoContext _todocontext;
+@inject NavigationManager _navi;
+
+
+@page "/todo";
+
+
+<ul>
+    @if (todoItems != null)
+    {
+        foreach (Viewmodel todo in todoItems)
+        {
+            <li>
+                <div> @todo.TodoText</div>
+            </li>
+        }
+    }
+
+</ul>
+
+<input placeholder="Something todo" @bind="newTodo" />
+<button @onclick="AddTodo">Add todo</button>
+<button @onclick="Sentlist"> Check Hash</button>
+<button @onclick="oldlist">Dum</button>
+
+
+@*<h3>MD5: @OutputText</h3>*@
+
+@*<h3>Bcrypt: @OutputText2</h3>*@
+
+@*<br />
+<h3>Procent: @OutputText3</h3>
+<h3>Procent1: @OutputText4</h3>*@
+
+@code {
+    private List<Viewmodel> todoItems { get; set; }
+    private string? newTodo;
+    public string username { get; set; }
+
+
+    // private List<BlazorServerApp2.Model.Todolist> Oldlist { get; set; }
+
+    private List<Todolist> todolisten { get; set; }
+
+    private async Task AddTodo()
+    {
+        if (!string.IsNullOrWhiteSpace(newTodo))
+        {
+            var authState = await authenticationStateTask;
+            var user = authState.User;
+            //username = user.Identity.Name;
+
+            string encryption = _encryptiontest.Protect(newTodo);
+            Todolist todos = new Todolist() { TodoText = encryption, BrugerId = username };
+            if (todos != null)
+            {
+                await _todocontext.AddAsync(todos);
+                await _todocontext.SaveChangesAsync();
+                SelectTodo();
+            }
+        }
+    }
+    private void Sentlist()
+    {
+        CheckHash.todolisten = todolisten;
+        _navi.NavigateTo("/CheckHash");
+
+    }
+    private void oldlist()
+    {
+        todolisten.Add(new Todolist() { BrugerId = "2", TodoText = "Jørgen" });
+        CheckHash.todolisten = todolisten;
+        _navi.NavigateTo("/CheckHash");
+
+    }
+
+
+    private void SelectTodo()
+    {
+        todoItems = new List<Viewmodel>();
+        todolisten = _todocontext.Todolists.Where(p => p.BrugerId == username).ToList();
+        foreach (var item in todolisten)
+        {
+            todoItems.Add(new Viewmodel()
+                {
+                    BrugerId = item.BrugerId,
+                    TodoText = _encryptiontest.UnProtect(item.TodoText)
+                });
+        }
+    }
+    
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+
+    private bool IsAuthenticated { get; set; }
+    //private string? OutputText { get; set; }
+    //private string? OutputText2 { get; set; }
+    //private string? OutputText3 { get; set; }
+    //private string? OutputText4 { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    //OutputText = "Du er ikke Logged Ind";
+    string salt = "idjfkdflkjsalj";
+    var authState = await authenticationStateTask;
+    var user = authState.User;
+
+    username = user.Identity.Name;
+    SelectTodo();
+    //OutputText = _hashingtest.CreateMD5Hash();
+    }
+
+
+}
